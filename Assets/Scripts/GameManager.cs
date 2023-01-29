@@ -1,27 +1,36 @@
 using System;
+using System.Collections.Generic;
+using Assets.Core.Models;
 using Core.Ioc;
-using Core.Models;
 using UnityEngine;
 
 public interface IGameManager
 {
+    int CurrentPlayerIndex { get; }
     GameState GameState { get; }
+    int NumberOfDicePerPlayer { get; }
     event EventHandler<GameState> GameStateChanged;
+    event EventHandler PlayerAdded;
 }
 
 public class GameManager : MonoBehaviour, IGameManager
 {
-    private bool _isPaused = false;
+    // dependencies
     private IDiceManager _diceManager;
 
-    // Roll => Show Result => Action => Score
+    private bool _isPaused = false;
+    [SerializeField] public int NumberOfDicePerPlayer { get; private set; } = 22; //todo move into gameSettings or something
+
+
     public GameState GameState { get; private set; }
+    public int CurrentPlayerIndex { get; private set; }
 
     public event EventHandler<GameState> GameStateChanged;
+    public event EventHandler PlayerAdded;
 
     void Awake()
     {
-        DiContainer.Current.Register<IGameManager>(this);
+        DiContainer.Current.Register<IGameManager,GameManager>(this);
     }
 
     // Start is called before the first frame update
@@ -35,17 +44,8 @@ public class GameManager : MonoBehaviour, IGameManager
     {
     }
 
-    private void PrintOutResults(DieRollResult[] results)
-    {
-        foreach (var result in results)
-        {
-            Debug.Log(result.Value + " : " + result.Count);
-        }
-    }
-
     private void ChangeGameState(GameState gameState)
     {
-        // todo add validation
         GameState = gameState;
         GameStateChanged?.Invoke(this,gameState);
     }

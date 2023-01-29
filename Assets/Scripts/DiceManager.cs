@@ -7,7 +7,7 @@ using UnityEngine;
 public interface IDiceManager
 {
     void RollDice();
-    event EventHandler<DieRollResult[]> DiceStoppedRolling;
+    event EventHandler<DieSet[]> DiceStoppedRolling;
 }
 
 public class DiceManager : MonoBehaviour, IDiceManager
@@ -19,15 +19,20 @@ public class DiceManager : MonoBehaviour, IDiceManager
     private Die[] _dice;
     private int _numberOfStillDice;
 
-    public event EventHandler<DieRollResult[]> DiceStoppedRolling;
+    public event EventHandler<DieSet[]> DiceStoppedRolling;
+
+    public void Awake()
+    {
+        DiContainer.Current.Register<IDiceManager,DiceManager>(this);
+    }
 
     // Update is called once per frame
-    void Update()
+    public void Update()
     {
         // todo remove
-        if (Input.GetKeyUp(KeyCode.R)) SpawnPattern();
+        //if (Input.GetKeyUp(KeyCode.R)) SpawnPattern();
 
-        if (Input.GetKeyUp(KeyCode.E)) RollDice();
+        //if (Input.GetKeyUp(KeyCode.E)) RollDice();
     }
 
     private void SpawnPattern()
@@ -85,21 +90,14 @@ public class DiceManager : MonoBehaviour, IDiceManager
         if (_numberOfStillDice == _dice.Length)
         {
             TallyResults();
-            //DiceStoppedRolling?.Invoke(this, TallyResults());
+            DiceStoppedRolling?.Invoke(this, TallyResults());
         }
     }
 
-    private DieRollResult[] TallyResults()
+    private DieSet[] TallyResults()
     {
-        var results = _dice.GroupBy(die => die.GetCurrentValue())
-            .Select(dice => new DieRollResult(dice.First().CachedValue, dice.Count())).OrderBy(result => result.Value).ToArray();
-
-        foreach (var result in results)
-        {
-            Debug.Log(result.Value + " : " + result.Count);
-        }
-
-        return results;
+        return _dice.GroupBy(die => die.GetCurrentValue())
+            .Select(dice => new DieSet(dice.First().CachedValue, dice.Count())).OrderBy(result => result.Value).ToArray();
     }
 
     public void RollDice()

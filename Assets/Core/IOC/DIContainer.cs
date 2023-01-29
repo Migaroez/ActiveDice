@@ -21,15 +21,28 @@ namespace Core.Ioc
             }
         }
 
-        public void Register<T>(T implementation) where T : class
+        public void Register<TType>(TType implementation) where TType : class
         {
-            var type = typeof(T);
+            var type = typeof(TType);
 
             if (_registrationList.ContainsKey(type) && _registrationList[type] != null)
             {
                 throw new ArgumentException("Type " + type + " is already registered");
             }
             _registrationList[type] = implementation;
+        }
+
+        public void Register<TAbstraction,TImplementation>(TImplementation implementation)
+            where TAbstraction : class
+            where TImplementation : TAbstraction
+             {
+                 var type = typeof(TAbstraction);
+
+                 if (_registrationList.ContainsKey(type) && _registrationList[type] != null)
+                 {
+                     throw new ArgumentException("Type " + type + " is already registered");
+                 }
+                 _registrationList[type] = implementation;
         }
 
         public T Resolve<T>() where T : class
