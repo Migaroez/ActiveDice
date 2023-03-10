@@ -14,6 +14,7 @@ public class RollResultManager : MonoBehaviour
 
     private IDiceManager _diceManager;
     private IGameManager _gameManager;
+    private IPlayerManager _playerManager;
 
     // Start is called before the first frame update
     void Start()
@@ -22,6 +23,8 @@ public class RollResultManager : MonoBehaviour
         _diceManager.DiceStoppedRolling += HandleDiceManagerOnDiceStoppedRolling;
 
         _gameManager = DiContainer.Current.Resolve<IGameManager>();
+
+        _playerManager = DiContainer.Current.Resolve<IPlayerManager>();
     }
 
     private void HandleDiceManagerOnDiceStoppedRolling(object sender, DieSet[] dieRollResults)
@@ -38,7 +41,7 @@ public class RollResultManager : MonoBehaviour
     public void HandleDieSelectionClicked(int dieValue)
     {
         if (_gameManager.GameState != GameState.Scoring)
-            return;
+            throw new InvalidGameStateException();
 
         Debug.Log("Die selection clicked: " + dieValue);
         _container.SetActive(false);

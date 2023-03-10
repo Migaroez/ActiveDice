@@ -6,44 +6,48 @@ using UnityEngine;
 
 public interface IDiceManager
 {
+    void SpawnDice(int numberOfDice);
     void RollDice();
+    event EventHandler DiceStartedRolling;
     event EventHandler<DieSet[]> DiceStoppedRolling;
 }
 
 public class DiceManager : MonoBehaviour, IDiceManager
 {
     [SerializeField] private GameObject _diePrefab;
-    [SerializeField] private int _maxNumberOfDice = 22;
     [SerializeField] private float _offsetSize = 0.5f;
 
     private Die[] _dice;
     private int _numberOfStillDice;
+    private IGameManager _gameManager;
 
+    public event EventHandler DiceStartedRolling;
     public event EventHandler<DieSet[]> DiceStoppedRolling;
 
     public void Awake()
     {
-        DiContainer.Current.Register<IDiceManager,DiceManager>(this);
+        DiContainer.Current.Register<IDiceManager, DiceManager>(this);
     }
 
-    // Update is called once per frame
-    public void Update()
+    public void Start()
     {
-        // todo remove
-        //if (Input.GetKeyUp(KeyCode.R)) SpawnPattern();
-
-        //if (Input.GetKeyUp(KeyCode.E)) RollDice();
+        _gameManager = DiContainer.Current.Resolve<IGameManager>();
     }
 
-    private void SpawnPattern()
+    public void SpawnDice(int numberOfDice)
     {
+        if (_gameManager.GameState != GameState.Initializing && _gameManager.GameState != GameState.PassingTurn)
+            throw new InvalidGameStateException();
+
+        Cleanup();
+
         var state = 0;
         var xOffset = 0;
         var zOffset = 0;
         var numStepsBeforeTurn = 1;
         var turnCounter = 1;
-        _dice = new Die[_maxNumberOfDice];
-        for (var step = 1; step <= _maxNumberOfDice; step++)
+        _dice = new Die[numberOfDice];
+        for (var step = 1; step <= numberOfDice; step++)
         {
             _dice[step - 1] = SpawnAndManage(xOffset, zOffset);
 
@@ -77,6 +81,20 @@ public class DiceManager : MonoBehaviour, IDiceManager
         }
     }
 
+    public void RollDice()
+    {
+        if (_gameManager.GameState != GameState.ReadyToRoll)
+            throw new InvalidGameStateException();
+
+        DiceStartedRolling?.Invoke(this, null);
+
+        foreach (var die in _dice)
+        {
+            _numberOfStillDice = 0;
+            die.Roll();
+        }
+    }
+
     private Die SpawnAndManage(float xOffset, float zOffset)
     {
         var die = Instantiate(_diePrefab, transform.position + new Vector3(xOffset * _offsetSize, 0, zOffset * _offsetSize), Quaternion.identity).GetComponent<Die>();
@@ -100,12 +118,15 @@ public class DiceManager : MonoBehaviour, IDiceManager
             .Select(dice => new DieSet(dice.First().CachedValue, dice.Count())).OrderBy(result => result.Value).ToArray();
     }
 
-    public void RollDice()
+    private void Cleanup()
     {
-        foreach (var die in _dice)
+        if (_dice?.Length < 0)
         {
-            _numberOfStillDice = 0;
-            die.Roll();
+            foreach (var die in _dice)
+            {
+                Destroy(die);
+            }
         }
+        _dice = null;
     }
 }

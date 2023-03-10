@@ -1,3 +1,4 @@
+using System;
 using Assets.Core.Models;
 using System.Collections.Generic;
 using Core.Ioc;
@@ -7,6 +8,7 @@ using UnityEngine;
 public interface IPlayerManager
 {
     IReadOnlyList<IPlayerViewData> Players { get; }
+    event EventHandler PlayerListClosed;
 }
 
 public class PlayerManager : MonoBehaviour, IPlayerManager
@@ -26,6 +28,8 @@ public class PlayerManager : MonoBehaviour, IPlayerManager
     private List<PlayerData> _players = new List<PlayerData>();
     private IGameManager _gameManager;
     public IReadOnlyList<IPlayerViewData> Players => _players;
+
+    public event EventHandler PlayerListClosed;
 
     public void Awake()
     {
@@ -75,18 +79,10 @@ public class PlayerManager : MonoBehaviour, IPlayerManager
         _playerListContainer.SetActive(true);
     }
 
-    public void HidePlayers()
+    public void ClosePlayerManager()
     {
-        if (_playerDisplays?.Length > 0)
-        {
-            foreach (var display in _playerDisplays)
-            {
-                Destroy(display);
-            }
-            _playerDisplays = null;
-        }
-        
-        _playerListContainer.SetActive(false);
+        HidePlayers();
+        PlayerListClosed?.Invoke(this, null);
     }
 
     public void ShowAddPlayer()
@@ -96,6 +92,20 @@ public class PlayerManager : MonoBehaviour, IPlayerManager
         _addPlayerUi.SetActive(true);
         _addPlayerName.Select();
         _addPlayerName.ActivateInputField();
+    }
+
+    private void HidePlayers()
+    {
+        if (_playerDisplays?.Length > 0)
+        {
+            foreach (var display in _playerDisplays)
+            {
+                Destroy(display);
+            }
+            _playerDisplays = null;
+        }
+
+        _playerListContainer.SetActive(false);
     }
 
     private void UpdateButtons()
