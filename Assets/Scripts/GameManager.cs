@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Core.Ioc;
 using Core.Models;
 using UnityEngine;
@@ -17,13 +18,14 @@ public class GameManager : MonoBehaviour, IGameManager
     // dependencies
     private IDiceManager _diceManager;
     private IPlayerManager _playerManager;
+    private IRollResultManager _rollResultManager;
+    private IDieActivator _dieActivator;
 
     private bool _isPaused = false;
     private GameObject[] _playerObjects;
 
     [SerializeField] public int NumberOfDicePerPlayer { get; private set; } = 22; //todo move into gameSettings or something
     [SerializeField] private GameObject _playerPrefab;
-
 
     public GameState GameState { get; private set; }
     public int CurrentPlayerIndex { get; private set; }
@@ -45,11 +47,38 @@ public class GameManager : MonoBehaviour, IGameManager
 
         _playerManager = DiContainer.Current.Resolve<IPlayerManager>();
         _playerManager.PlayerListClosed += PlayerManagerOnPlayerListClosed;
+
+        _rollResultManager = DiContainer.Current.Resolve<IRollResultManager>();
+        _rollResultManager.DiceScored += RollResultManagerOnDiceScored;
+
+        _dieActivator = DiContainer.Current.Resolve<IDieActivator>();
+        _dieActivator.DieActivationFinished += DieActivatorOnDieActivationFinished;
+    }
+
+    private void DieActivatorOnDieActivationFinished(object sender, EventArgs e)
+    {
+        ChangeGameState(GameState.Scoring);
+    }
+
+    private void RollResultManagerOnDiceScored(object sender, EventArgs e)
+    {
+        if (_playerManager.Players.Any(p => p.RemainingDice == 0))
+        {
+            ChangeGameState(GameState.Finished);
+            // todo show winner and overview
+            Debug.Log("Game finished");
+        }
+
+        ChangeGameState(GameState.PassingTurn);
+        ActivateNextPlayer();
+        ChangeGameState(GameState.ReadyToRoll);
     }
 
     private void DiceManagerOnDiceStoppedRolling(object sender, DieSet[] e)
     {
-        ChangeGameState(GameState.DieActivation);
+        ChangeGameState(_playerManager.Players[CurrentPlayerIndex].AmountOfScoredDice > 0
+            ? GameState.DieActivation
+            : GameState.Scoring);
     }
 
     private void _diceManager_DiceStartedRolling(object sender, EventArgs e)

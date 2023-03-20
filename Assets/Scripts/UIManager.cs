@@ -9,6 +9,7 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private TMP_Text _playerName;
     [SerializeField] private GameObject _currentPlayerDisplay;
+    [SerializeField] private GameObject _rollButton;
 
     // Start is called before the first frame update
     void Start()
@@ -24,6 +25,7 @@ public class UIManager : MonoBehaviour
     private void _gameManager_GameStateChanged(object sender, GameState gameState)
     {
         _currentPlayerDisplay.SetActive(gameState != GameState.Initializing && gameState != GameState.PassingTurn && gameState != GameState.Finished);
+        _rollButton.SetActive(gameState == GameState.ReadyToRoll);
     }
 
     private void GameManagerOnActivePlayerChanged(object sender, int currentPlayerIndex)

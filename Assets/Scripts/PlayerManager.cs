@@ -1,6 +1,7 @@
 using System;
 using Assets.Core.Models;
 using System.Collections.Generic;
+using System.Linq;
 using Core.Ioc;
 using TMPro;
 using UnityEngine;
@@ -9,6 +10,7 @@ public interface IPlayerManager
 {
     IReadOnlyList<IPlayerViewData> Players { get; }
     event EventHandler PlayerListClosed;
+    PlayerData GetEditablePlayer(Guid id);
 }
 
 public class PlayerManager : MonoBehaviour, IPlayerManager
@@ -92,6 +94,11 @@ public class PlayerManager : MonoBehaviour, IPlayerManager
         _addPlayerUi.SetActive(true);
         _addPlayerName.Select();
         _addPlayerName.ActivateInputField();
+    }
+
+    public PlayerData GetEditablePlayer(Guid id)
+    {
+        return _players.FirstOrDefault(p => p.Id == id);
     }
 
     private void HidePlayers()

@@ -10,6 +10,7 @@ public interface IDiceManager
     void RollDice();
     event EventHandler DiceStartedRolling;
     event EventHandler<DieSet[]> DiceStoppedRolling;
+    DieSet[] LastResult { get; }
 }
 
 public class DiceManager : MonoBehaviour, IDiceManager
@@ -23,6 +24,7 @@ public class DiceManager : MonoBehaviour, IDiceManager
 
     public event EventHandler DiceStartedRolling;
     public event EventHandler<DieSet[]> DiceStoppedRolling;
+    public DieSet[] LastResult { get; private set; }
 
     public void Awake()
     {
@@ -105,11 +107,11 @@ public class DiceManager : MonoBehaviour, IDiceManager
     private void HandleDieStoppedRolling(object sender, EventArgs e)
     {
         _numberOfStillDice++;
-        if (_numberOfStillDice == _dice.Length)
-        {
-            TallyResults();
-            DiceStoppedRolling?.Invoke(this, TallyResults());
-        }
+        if (_numberOfStillDice != _dice.Length) 
+            return;
+
+        LastResult = TallyResults();
+        DiceStoppedRolling?.Invoke(this, LastResult);
     }
 
     private DieSet[] TallyResults()
@@ -120,11 +122,11 @@ public class DiceManager : MonoBehaviour, IDiceManager
 
     private void Cleanup()
     {
-        if (_dice?.Length < 0)
+        if (_dice?.Length > 0)
         {
             foreach (var die in _dice)
             {
-                Destroy(die);
+                Destroy(die.gameObject);
             }
         }
         _dice = null;
