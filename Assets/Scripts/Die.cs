@@ -97,7 +97,7 @@ public class Die : MonoBehaviour
 
     private float GetRandomForceValue()
     {
-        return Random.Range(500f, 700f) * (Random.Range(0,2) == 0 ? -1 : 1);
+        return Random.Range(500f, 1000f) * (Random.Range(0,2) == 0 ? -1 : 1);
     }
 
     private Vector3 GetRandomTorqueVector()
@@ -107,6 +107,6 @@ public class Die : MonoBehaviour
 
     private float GetRandomTorqueValue()
     {
-        return Random.Range(1000f, 3000f) * (Random.Range(0, 2) == 0 ? -1 : 1);
+        return Random.Range(3000f, 4000f) * (Random.Range(0, 2) == 0 ? -1 : 1);
     }
 }
